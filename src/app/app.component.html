@@ -1,0 +1,111 @@
+<div class="container">
+  <header class="header">
+    <h1>Lietuviškų sakinių atpažinimas</h1>
+    <p class="subtitle">Įkelkite vaizdą su ranka rašytu lietuvišku sakiniu ir gaukite atpažintą tekstą</p>
+    <div class="status" [class.online]="isOnline" [class.offline]="!isOnline">
+      <span class="status-dot"></span>
+      {{ isOnline ? 'Serveris prijungtas' : 'Serveris nepasiekiamas' }}
+    </div>
+  </header>
+
+  <div class="main-content">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="activeTab === 'upload'"
+        (click)="switchTab('upload')">
+        📁 Įkelti
+      </button>
+      <button
+        class="tab"
+        [class.active]="activeTab === 'info'"
+        (click)="switchTab('info')">
+        ℹ️ Info
+      </button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'upload'">
+      <div class="upload-area" (click)="fileInput.click()">
+        <div class="upload-icon">📤</div>
+        <p>Spauskite norėdami įkelti vaizdą</p>
+        <small>Palaikomi formatai: PNG, JPG, JPEG</small>
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+          style="display: none">
+      </div>
+
+      <div class="preview-container" *ngIf="uploadedImage">
+        <img [src]="uploadedImage" alt="Uploaded image">
+        <button class="btn btn-primary" (click)="recognizeUploadedImage()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔍 Atpažinti</span>
+          <span *ngIf="isLoading">⏳ Apdorojama...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Info Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'info'">
+      <div class="info-card" *ngIf="modelInfo">
+        <h3>📊 Modelio Informacija</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Žodynas:</span>
+            <span class="value">{{ modelInfo.vocabulary }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Simbolių kiekis:</span>
+            <span class="value">{{ modelInfo.vocab_size }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Maks. teksto ilgis:</span>
+            <span class="value">{{ modelInfo.max_text_length }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Vaizdo dydis:</span>
+            <span class="value">{{ modelInfo.image_width }}×{{ modelInfo.image_height }}px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>💡 Kaip naudoti</h3>
+        <ol class="instructions">
+          <li>Pasirinkite <strong>Įkelti</strong> ir įkelkite rankraščio nuotrauką</li>
+          <li>Spauskite <strong>Atpažinti</strong> mygtuką</li>
+          <li>Rezultatas bus rodomas apačioje</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section" *ngIf="result || error">
+      <div class="result-card success" *ngIf="result">
+        <div class="result-header">
+          <span class="icon">✅</span>
+          <h3>Atpažintas tekstas:</h3>
+        </div>
+        <div class="result-text">{{ result }}</div>
+        <button class="btn-copy" (click)="copyToClipboard()">
+          📋 Kopijuoti
+        </button>
+      </div>
+
+      <div class="result-card error" *ngIf="error">
+        <div class="result-header">
+          <span class="icon">❌</span>
+          <h3>Klaida:</h3>
+        </div>
+        <div class="error-text">{{ error }}</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Kursinio darbo projektas 2025</p>
+  </footer>
+</div>
