@@ -109,6 +109,35 @@
   min-height: 400px;
 }
 
+.canvas-container {
+  border: 3px dashed #ddd;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  overflow: hidden;
+  width: 100%;
+}
+
+canvas {
+  cursor: crosshair;
+  display: block;
+  touch-action: none;
+  /* Svarbu: canvas rodomas mažesnis, bet tikrasis dydis išlieka 2262x199 */
+  width: 100%;
+  height: auto;
+  max-height: 199px;
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
 .btn {
   padding: 12px 30px;
   border: none;
@@ -135,6 +164,33 @@
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #f44336;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+.brush-size {
+  text-align: center;
+  color: #666;
+}
+
+.brush-size label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.brush-size input[type="range"] {
+  width: 100%;
+  max-width: 300px;
+  cursor: pointer;
 }
 
 .upload-area {
@@ -327,6 +383,10 @@
 
   .tab-content {
     padding: 20px;
+  }
+
+  canvas {
+    max-width: 100%;
   }
 
   .info-grid {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -26,9 +26,14 @@ interface ModelInfo {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
+  @ViewChild('canvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
-  activeTab: 'upload' | 'info' = 'upload';
+  private ctx!: CanvasRenderingContext2D;
+  private isDrawing = false;
+
+  activeTab: 'draw' | 'upload' | 'info' = 'draw';
+  brushSize = 18;
   uploadedImage: string | null = null;
   uploadedFile: File | null = null;
 
@@ -38,7 +43,7 @@ export class AppComponent implements OnInit {
   isOnline = false;
   modelInfo: ModelInfo | null = null;
 
-  private readonly apiUrl = 'https://lithuanian-sentences-recognition-api.onrender.com';
+  private readonly apiUrl = 'http://127.0.0.1:8000';
 
   constructor(private http: HttpClient) {}
 
@@ -47,10 +52,111 @@ export class AppComponent implements OnInit {
     this.loadModelInfo();
   }
 
-  switchTab(tab: 'upload' | 'info'): void {
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initCanvas(), 0);
+  }
+
+  private initCanvas(): void {
+    if (!this.canvasRef) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    canvas.width = 2262;
+    canvas.height = 199;
+
+    this.ctx = canvas.getContext('2d')!;
+
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    this.ctx.strokeStyle = '#2a2a2a';
+    this.ctx.lineWidth = this.brushSize;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+  }
+
+  switchTab(tab: 'draw' | 'upload' | 'info'): void {
     this.activeTab = tab;
     this.result = null;
     this.error = null;
+
+    if (tab === 'draw') {
+      setTimeout(() => this.initCanvas(), 0);
+    }
+  }
+
+  startDrawing(event: MouseEvent | TouchEvent): void {
+    this.isDrawing = true;
+    const pos = this.getPosition(event);
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos.x, pos.y);
+  }
+
+  draw(event: MouseEvent | TouchEvent): void {
+    if (!this.isDrawing) return;
+
+    event.preventDefault();
+    const pos = this.getPosition(event);
+    this.ctx.lineWidth = this.brushSize;
+    this.ctx.lineTo(pos.x, pos.y);
+    this.ctx.stroke();
+  }
+
+  stopDrawing(): void {
+    this.isDrawing = false;
+  }
+
+  private getPosition(event: MouseEvent | TouchEvent): { x: number; y: number } {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+
+    // Mastelių santykis tarp tikro canvas dydžio ir ekrano dydžio
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    if (event instanceof MouseEvent) {
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+      };
+    } else {
+      const touch = event.touches[0];
+      return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY
+      };
+    }
+  }
+
+  clearCanvas(): void {
+    const canvas = this.canvasRef.nativeElement;
+    this.ctx.fillStyle = 'white';
+    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    this.result = null;
+    this.error = null;
+  }
+
+  recognizeDrawing(): void {
+    const canvas = this.canvasRef.nativeElement;
+
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const offCtx = offscreen.getContext('2d')!;
+
+    offCtx.drawImage(canvas, 0, 0);
+
+    const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      data[i] = gray;
+      data[i + 1] = gray;
+      data[i + 2] = gray;
+    }
+    offCtx.putImageData(imageData, 0, 0);
+
+    const base64Image = offscreen.toDataURL('image/png');
+    this.predict(base64Image);
   }
 
   onFileSelected(event: Event): void {

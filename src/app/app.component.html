@@ -1,7 +1,7 @@
 <div class="container">
   <header class="header">
-    <h1>Lietuviškų sakinių atpažinimas</h1>
-    <p class="subtitle">Įkelkite vaizdą su ranka rašytu lietuvišku sakiniu ir gaukite atpažintą tekstą</p>
+    <h1> Lietuviškų sakinių atpažinimas</h1>
+    <p class="subtitle">Parašykite tekstą arba įkelkite vaizdą</p>
     <div class="status" [class.online]="isOnline" [class.offline]="!isOnline">
       <span class="status-dot"></span>
       {{ isOnline ? 'Serveris prijungtas' : 'Serveris nepasiekiamas' }}
@@ -11,6 +11,12 @@
   <div class="main-content">
     <!-- Tabs -->
     <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="activeTab === 'draw'"
+        (click)="switchTab('draw')">
+        ✏️ Piešti
+      </button>
       <button
         class="tab"
         [class.active]="activeTab === 'upload'"
@@ -25,11 +31,47 @@
       </button>
     </div>
 
+    <!-- Draw Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'draw'">
+      <div class="canvas-container">
+        <canvas
+          #canvas
+          (mousedown)="startDrawing($event)"
+          (mousemove)="draw($event)"
+          (mouseup)="stopDrawing()"
+          (mouseleave)="stopDrawing()"
+          (touchstart)="startDrawing($event)"
+          (touchmove)="draw($event)"
+          (touchend)="stopDrawing()">
+        </canvas>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-secondary" (click)="clearCanvas()">
+          🗑️ Išvalyti
+        </button>
+        <button class="btn btn-primary" (click)="recognizeDrawing()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔍 Atpažinti</span>
+          <span *ngIf="isLoading">⏳ Apdorojama...</span>
+        </button>
+      </div>
+
+      <div class="brush-size">
+        <label>Teptukas: {{ brushSize }}px</label>
+        <input
+          type="range"
+          [(ngModel)]="brushSize"
+          min="2"
+          max="20"
+          step="1">
+      </div>
+    </div>
+
     <!-- Upload Tab -->
     <div class="tab-content" *ngIf="activeTab === 'upload'">
       <div class="upload-area" (click)="fileInput.click()">
         <div class="upload-icon">📤</div>
-        <p>Spauskite norėdami įkelti vaizdą</p>
+        <p>Spustelėkite arba nutempkite vaizdą</p>
         <small>Palaikomi formatai: PNG, JPG, JPEG</small>
         <input
           #fileInput
@@ -75,8 +117,9 @@
       <div class="info-card">
         <h3>💡 Kaip naudoti</h3>
         <ol class="instructions">
-          <li>Pasirinkite <strong>Įkelti</strong> ir įkelkite rankraščio nuotrauką</li>
-          <li>Spauskite <strong>Atpažinti</strong> mygtuką</li>
+          <li>Pasirinkite <strong>Piešti</strong> ir parašykite tekstą pelyte arba pirštu</li>
+          <li>Arba pasirinkite <strong>Įkelti</strong> ir įkelkite rankraščio nuotrauką</li>
+          <li>Spauskite <strong>Atpažinti</strong> mygtukų</li>
           <li>Rezultatas bus rodomas apačioje</li>
         </ol>
       </div>
@@ -106,6 +149,6 @@
   </div>
 
   <footer class="footer">
-    <p>Kursinio darbo projektas 2025</p>
+    <p>Bakalauro darbas 2026</p>
   </footer>
 </div>
