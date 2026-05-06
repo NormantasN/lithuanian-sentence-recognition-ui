@@ -43,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   isOnline = false;
   modelInfo: ModelInfo | null = null;
 
-  private readonly apiUrl = 'http://127.0.0.1:8000';
+  private readonly apiUrl = 'https://lithuanian-sentences-recognition-api.onrender.com';
 
   constructor(private http: HttpClient) {}
 
