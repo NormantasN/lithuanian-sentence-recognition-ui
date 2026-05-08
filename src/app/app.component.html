@@ -1,154 +1,98 @@
 <div class="container">
   <header class="header">
-    <h1> Lietuviškų sakinių atpažinimas</h1>
+    <h1>Lietuviškų sakinių atpažinimas</h1>
     <p class="subtitle">Parašykite tekstą arba įkelkite vaizdą</p>
-    <div class="status" [class.online]="isOnline" [class.offline]="!isOnline">
+    <div [class.offline]="!isOnline" [class.online]="isOnline" class="status">
       <span class="status-dot"></span>
       {{ isOnline ? 'Serveris prijungtas' : 'Serveris nepasiekiamas' }}
     </div>
   </header>
 
   <div class="main-content">
-    <!-- Tabs -->
     <div class="tabs">
-      <button
-        class="tab"
-        [class.active]="activeTab === 'draw'"
-        (click)="switchTab('draw')">
-        ✏️ Piešti
-      </button>
-      <button
-        class="tab"
-        [class.active]="activeTab === 'upload'"
-        (click)="switchTab('upload')">
-        📁 Įkelti
-      </button>
-      <button
-        class="tab"
-        [class.active]="activeTab === 'info'"
-        (click)="switchTab('info')">
-        ℹ️ Info
-      </button>
+      <button (click)="switchTab('draw')" [class.active]="activeTab === 'draw'" class="tab">Piešti</button>
+      <button (click)="switchTab('upload')" [class.active]="activeTab === 'upload'" class="tab">Įkelti</button>
+      <button (click)="switchTab('info')" [class.active]="activeTab === 'info'" class="tab">Info</button>
     </div>
 
-    <!-- Draw Tab -->
-    <div class="tab-content" *ngIf="activeTab === 'draw'">
+    <div *ngIf="activeTab === 'draw'" class="tab-content">
       <div class="canvas-container">
         <canvas
           #canvas
           (mousedown)="startDrawing($event)"
+          (mouseleave)="stopDrawing()"
           (mousemove)="draw($event)"
           (mouseup)="stopDrawing()"
-          (mouseleave)="stopDrawing()"
-          (touchstart)="startDrawing($event)"
+          (touchend)="stopDrawing()"
           (touchmove)="draw($event)"
-          (touchend)="stopDrawing()">
+          (touchstart)="startDrawing($event)">
         </canvas>
       </div>
-
       <div class="controls">
-        <button class="btn btn-secondary" (click)="clearCanvas()">
-          🗑️ Išvalyti
+        <button (click)="clearCanvas()" class="btn btn-secondary">Išvalyti</button>
+        <button (click)="recognizeDrawing()" [disabled]="isLoading" class="btn btn-primary">
+          {{ isLoading ? 'Apdorojama...' : 'Atpažinti' }}
         </button>
-        <button class="btn btn-primary" (click)="recognizeDrawing()" [disabled]="isLoading">
-          <span *ngIf="!isLoading">🔍 Atpažinti</span>
-          <span *ngIf="isLoading">⏳ Apdorojama...</span>
-        </button>
-      </div>
-
-      <div class="brush-size">
-        <label>Teptukas: {{ brushSize }}px</label>
-        <input
-          type="range"
-          [(ngModel)]="brushSize"
-          min="2"
-          max="20"
-          step="1">
       </div>
     </div>
 
-    <!-- Upload Tab -->
-    <div class="tab-content" *ngIf="activeTab === 'upload'">
-      <div class="upload-area" (click)="fileInput.click()">
-        <div class="upload-icon">📤</div>
+    <div *ngIf="activeTab === 'upload'" class="tab-content">
+      <div (click)="fileInput.click()" class="upload-area">
         <p>Spustelėkite arba nutempkite vaizdą</p>
         <small>Palaikomi formatai: PNG, JPG, JPEG</small>
-        <input
-          #fileInput
-          type="file"
-          accept="image/*"
-          (change)="onFileSelected($event)"
-          style="display: none">
+        <input #fileInput (change)="onFileSelected($event)" accept="image/*" style="display:none" type="file">
       </div>
-
-      <div class="preview-container" *ngIf="uploadedImage">
-        <img [src]="uploadedImage" alt="Uploaded image">
-        <button class="btn btn-primary" (click)="recognizeUploadedImage()" [disabled]="isLoading">
-          <span *ngIf="!isLoading">🔍 Atpažinti</span>
-          <span *ngIf="isLoading">⏳ Apdorojama...</span>
+      <div *ngIf="uploadedImage" class="preview-container">
+        <img [src]="uploadedImage" alt="Įkeltas vaizdas">
+        <button (click)="recognizeUploadedImage()" [disabled]="isLoading" class="btn btn-primary">
+          {{ isLoading ? 'Apdorojama...' : 'Atpažinti' }}
         </button>
       </div>
     </div>
 
-    <!-- Info Tab -->
-    <div class="tab-content" *ngIf="activeTab === 'info'">
-      <div class="info-card" *ngIf="modelInfo">
-        <h3>📊 Modelio Informacija</h3>
+    <div *ngIf="activeTab === 'info'" class="tab-content">
+      <div *ngIf="modelInfo" class="info-card">
+        <h3>Modelio informacija</h3>
         <div class="info-grid">
           <div class="info-item">
-            <span class="label">Žodynas:</span>
+            <span class="label">Žodynas</span>
             <span class="value">{{ modelInfo.vocabulary }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Simbolių kiekis:</span>
+            <span class="label">Simbolių kiekis</span>
             <span class="value">{{ modelInfo.vocab_size }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Maks. teksto ilgis:</span>
+            <span class="label">Maks. teksto ilgis</span>
             <span class="value">{{ modelInfo.max_text_length }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Vaizdo dydis:</span>
+            <span class="label">Vaizdo dydis</span>
             <span class="value">{{ modelInfo.image_width }}×{{ modelInfo.image_height }}px</span>
           </div>
         </div>
       </div>
-
       <div class="info-card">
-        <h3>💡 Kaip naudoti</h3>
+        <h3>Kaip naudoti</h3>
         <ol class="instructions">
           <li>Pasirinkite <strong>Piešti</strong> ir parašykite tekstą pelyte arba pirštu</li>
           <li>Arba pasirinkite <strong>Įkelti</strong> ir įkelkite rankraščio nuotrauką</li>
-          <li>Spauskite <strong>Atpažinti</strong> mygtukų</li>
+          <li>Spauskite <strong>Atpažinti</strong></li>
           <li>Rezultatas bus rodomas apačioje</li>
         </ol>
       </div>
     </div>
 
-    <!-- Results Section -->
-    <div class="results-section" *ngIf="result || error">
-      <div class="result-card success" *ngIf="result">
-        <div class="result-header">
-          <span class="icon">✅</span>
-          <h3>Atpažintas tekstas:</h3>
-        </div>
+    <div *ngIf="result || error" class="results-section">
+      <div *ngIf="result" class="result-card success">
+        <div class="result-header"><span class="icon">✓</span> Atpažintas tekstas</div>
         <div class="result-text">{{ result }}</div>
-        <button class="btn-copy" (click)="copyToClipboard()">
-          📋 Kopijuoti
-        </button>
+        <button (click)="copyToClipboard()" class="btn-copy">Kopijuoti</button>
       </div>
-
-      <div class="result-card error" *ngIf="error">
-        <div class="result-header">
-          <span class="icon">❌</span>
-          <h3>Klaida:</h3>
-        </div>
+      <div *ngIf="error" class="result-card error">
+        <div class="result-header"><span class="icon">✕</span> Klaida</div>
         <div class="error-text">{{ error }}</div>
       </div>
     </div>
   </div>
-
-  <footer class="footer">
-    <p>Bakalauro darbas 2026</p>
-  </footer>
 </div>

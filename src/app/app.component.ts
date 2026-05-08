@@ -1,7 +1,7 @@
-import { Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {HttpClient} from '@angular/common/http';
+import {FormsModule} from '@angular/forms';
 
 interface PredictionResponse {
   success: boolean;
@@ -27,25 +27,21 @@ interface ModelInfo {
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  @ViewChild('canvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
-
-  private ctx!: CanvasRenderingContext2D;
-  private isDrawing = false;
-
+  @ViewChild('canvas', {static: false}) canvasRef!: ElementRef<HTMLCanvasElement>;
   activeTab: 'draw' | 'upload' | 'info' = 'draw';
-  brushSize = 18;
   uploadedImage: string | null = null;
   uploadedFile: File | null = null;
-
   result: string | null = null;
   error: string | null = null;
   isLoading = false;
   isOnline = false;
   modelInfo: ModelInfo | null = null;
-
+  private ctx!: CanvasRenderingContext2D;
+  private isDrawing = false;
   private readonly apiUrl = 'https://lithuanian-sentences-recognition-api.onrender.com';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   ngOnInit(): void {
     this.checkServerStatus();
@@ -54,24 +50,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => this.initCanvas(), 0);
-  }
-
-  private initCanvas(): void {
-    if (!this.canvasRef) return;
-
-    const canvas = this.canvasRef.nativeElement;
-    canvas.width = 2262;
-    canvas.height = 199;
-
-    this.ctx = canvas.getContext('2d')!;
-
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    this.ctx.strokeStyle = '#2a2a2a';
-    this.ctx.lineWidth = this.brushSize;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
   }
 
   switchTab(tab: 'draw' | 'upload' | 'info'): void {
@@ -96,35 +74,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     event.preventDefault();
     const pos = this.getPosition(event);
-    this.ctx.lineWidth = this.brushSize;
+    this.ctx.lineWidth = 1;
     this.ctx.lineTo(pos.x, pos.y);
     this.ctx.stroke();
   }
 
   stopDrawing(): void {
     this.isDrawing = false;
-  }
-
-  private getPosition(event: MouseEvent | TouchEvent): { x: number; y: number } {
-    const canvas = this.canvasRef.nativeElement;
-    const rect = canvas.getBoundingClientRect();
-
-    // Mastelių santykis tarp tikro canvas dydžio ir ekrano dydžio
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    if (event instanceof MouseEvent) {
-      return {
-        x: (event.clientX - rect.left) * scaleX,
-        y: (event.clientY - rect.top) * scaleY
-      };
-    } else {
-      const touch = event.touches[0];
-      return {
-        x: (touch.clientX - rect.left) * scaleX,
-        y: (touch.clientY - rect.top) * scaleY
-      };
-    }
   }
 
   clearCanvas(): void {
@@ -182,6 +138,54 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
+  copyToClipboard(): void {
+    if (this.result) {
+      navigator.clipboard.writeText(this.result).then(() => {
+        alert('Tekstas nukopijuotas!');
+      });
+    }
+  }
+
+  private initCanvas(): void {
+    if (!this.canvasRef) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    canvas.width = 2262;
+    canvas.height = 199;
+
+    this.ctx = canvas.getContext('2d')!;
+
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    this.ctx.strokeStyle = '#2a2a2a';
+    this.ctx.lineWidth = 1;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+  }
+
+  private getPosition(event: MouseEvent | TouchEvent): { x: number; y: number } {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+
+    // Mastelių santykis tarp tikro canvas dydžio ir ekrano dydžio
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    if (event instanceof MouseEvent) {
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+      };
+    } else {
+      const touch = event.touches[0];
+      return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY
+      };
+    }
+  }
+
   private predict(base64Image: string): void {
     this.isLoading = true;
     this.result = null;
@@ -203,14 +207,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.error = `Serverio klaida: ${err.message}`;
       }
     });
-  }
-
-  copyToClipboard(): void {
-    if (this.result) {
-      navigator.clipboard.writeText(this.result).then(() => {
-        alert('Tekstas nukopijuotas!');
-      });
-    }
   }
 
   private checkServerStatus(): void {
